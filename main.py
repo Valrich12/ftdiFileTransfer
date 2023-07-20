@@ -20,36 +20,34 @@ def receive_data(port, size):
     return data
 
 
-def archivo_a_bytes(nombre_archivo):
-    with open(nombre_archivo, "rb") as archivo:
-        contenido = archivo.read()
-    return contenido
+def read_file(file_name):
+    with open(file_name, "rb") as file:
+        data = file.read()
+    return data
 
 
-def guardar_archivo(nombre_archivo, contenido):
-    with open(nombre_archivo, "wb") as archivo:
-        archivo.write(contenido)
+def save_file(file_name, data):
+    with open(file_name, "wb") as archivo:
+        archivo.write(data)
 
 
 def send_file():
     file_name = label3.cget("text")
+    data = read_file(file_name)
     port1 = serial.Serial("COM4", 115200, timeout=1)
     try:
-        # Envia el archivo desde el primer dispositivo al segundo dispositivo
-        data = archivo_a_bytes(file_name)
+        #
         send_data(data, port1)
-        print("Estado de envío: Enviando")
 
-        # Recibe la cadena en el segundo dispositivo desde el primer dispositivo
-        received_data = receive_data(port1, len(data))
-        guardar_archivo("prueba.rar", received_data)
-        print("Cadena recibida:", received_data)
+        # Only for tests
+        # received_data = receive_data(port1, len(data))
+        # save_file("prueba.rar", received_data)
 
     except serial.SerialException as e:
-        print("Ocurrió un error al abrir el puerto serie:", e)
+        print("There was an error trying to send the file", e)
 
     finally:
-        # Cierra las conexiones seriales
+        #
         port1.close()
 
 
