@@ -69,13 +69,13 @@ def send_file():
 
     formatted_data = format_data(data, address, command)
 
-    # port1 = serial.Serial("COM4", 115200, timeout=1)
+    port1 = serial.Serial("COM4", 115200, timeout=1)
     try:
         #
         testfile = open('test.hex', 'wb')
         for data_package in formatted_data:
             testfile.write(data_package)
-            # send_data(data_package, port1)
+            send_data(data_package, port1)
         # Only for tests
         # received_data = receive_data(port1, len(data))
         # save_file("prueba.rar", received_data)
@@ -85,7 +85,7 @@ def send_file():
 
     finally:
         print("test successful")
-        # port1.close()
+        port1.close()
 
 
 def browse_file():
@@ -110,10 +110,10 @@ label3.pack(pady=12, padx=10)
 chooseFileButton = customtkinter.CTkButton(master=frame, text="CHOOSE FILE", command=browse_file)
 chooseFileButton.pack(pady=12, padx=10)
 
-addressEntry = customtkinter.CTkEntry(master=frame,placeholder_text="ADDRESS")
+addressEntry = customtkinter.CTkEntry(master=frame, placeholder_text="ADDRESS")
 addressEntry.pack(pady=12, padx=10)
 
-commandEntry = customtkinter.CTkEntry(master=frame,placeholder_text="COMMAND")
+commandEntry = customtkinter.CTkEntry(master=frame, placeholder_text="COMMAND")
 commandEntry.pack(pady=12, padx=10)
 
 sendButton = customtkinter.CTkButton(master=frame, text="SEND", command=send_file)
