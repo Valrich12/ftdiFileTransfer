@@ -61,7 +61,6 @@ def format_data(data, address, command):
 
 
 def send_file():
-
     sendButton.configure(state="disabled")
     file_name = label3.cget("text")
     port = portVar.get()
@@ -73,10 +72,6 @@ def send_file():
 
     formatted_data = format_data(data, address, command)
 
-    progress = 100/len(formatted_data)
-    progress_bar.configure(determinate_speed=progress)
-
-
     port1 = serial.Serial(port, 115200, timeout=1)
     try:
         #
@@ -84,7 +79,6 @@ def send_file():
         for data_package in formatted_data:
             testfile.write(data_package)
             send_data(data_package, port1)
-            progress_bar.step()
             print(data_package)
         # Only for tests
         # received_data = receive_data(port1, len(data))
@@ -97,7 +91,6 @@ def send_file():
     finally:
         print("test successful")
         sendButton.configure(state="normal")
-        progress_bar.destroy()
         port1.close()
 
 
@@ -134,8 +127,6 @@ portValues = ['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7']
 portComboBox = customtkinter.CTkComboBox(master=frame, values=portValues, variable=portVar)
 portComboBox.pack(pady=12, padx=10)
 
-progress_bar = customtkinter.CTkProgressBar(master=frame, width=450)
-progress_bar.pack(pady=10, padx=10)
 
 sendButton = customtkinter.CTkButton(master=frame, text="SEND", command=send_file)
 sendButton.pack(pady=12, padx=10)
