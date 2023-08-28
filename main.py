@@ -63,6 +63,9 @@ def format_data(data, address, command):
 def send_file():
     sendButton.configure(state="disabled")
     file_name = label3.cget("text")
+    if file_name == "":
+        sendButton.configure(state="enabled")
+        return
     port = portVar.get()
     print(port)
 
@@ -100,6 +103,7 @@ def browse_file():
                                           filetypes=(("All files", "*.*"),))
     label3.configure(text=filepath)
 
+
 if __name__ == '__main__':
     frame = customtkinter.CTkFrame(master=root)
     frame.pack(pady=20, padx=60, fill="both", expand=True)
@@ -126,7 +130,6 @@ if __name__ == '__main__':
     portValues = ['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7']
     portComboBox = customtkinter.CTkComboBox(master=frame, values=portValues, variable=portVar)
     portComboBox.pack(pady=12, padx=10)
-
 
     sendButton = customtkinter.CTkButton(master=frame, text="SEND", command=send_file)
     sendButton.pack(pady=12, padx=10)
