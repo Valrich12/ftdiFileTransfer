@@ -100,35 +100,35 @@ def browse_file():
                                           filetypes=(("All files", "*.*"),))
     label3.configure(text=filepath)
 
+if __name__ == '__main__':
+    frame = customtkinter.CTkFrame(master=root)
+    frame.pack(pady=20, padx=60, fill="both", expand=True)
 
-frame = customtkinter.CTkFrame(master=root)
-frame.pack(pady=20, padx=60, fill="both", expand=True)
+    label = customtkinter.CTkLabel(master=frame, text="ftdi File Transfer", font=("Roboto", 24))
+    label.pack(pady=12, padx=10)
 
-label = customtkinter.CTkLabel(master=frame, text="ftdi File Transfer", font=("Roboto", 24))
-label.pack(pady=12, padx=10)
+    label2 = customtkinter.CTkLabel(master=frame, text="File Path", font=("Roboto", 24))
+    label2.pack(pady=12, padx=10)
 
-label2 = customtkinter.CTkLabel(master=frame, text="File Path", font=("Roboto", 24))
-label2.pack(pady=12, padx=10)
+    label3 = customtkinter.CTkLabel(master=frame, text="", font=("Roboto", 16))
+    label3.pack(pady=12, padx=10)
 
-label3 = customtkinter.CTkLabel(master=frame, text="", font=("Roboto", 16))
-label3.pack(pady=12, padx=10)
+    chooseFileButton = customtkinter.CTkButton(master=frame, text="CHOOSE FILE", command=browse_file)
+    chooseFileButton.pack(pady=12, padx=10)
 
-chooseFileButton = customtkinter.CTkButton(master=frame, text="CHOOSE FILE", command=browse_file)
-chooseFileButton.pack(pady=12, padx=10)
+    addressEntry = customtkinter.CTkEntry(master=frame, placeholder_text="ADDRESS")
+    addressEntry.pack(pady=12, padx=10)
 
-addressEntry = customtkinter.CTkEntry(master=frame, placeholder_text="ADDRESS")
-addressEntry.pack(pady=12, padx=10)
+    commandEntry = customtkinter.CTkEntry(master=frame, placeholder_text="COMMAND")
+    commandEntry.pack(pady=12, padx=10)
 
-commandEntry = customtkinter.CTkEntry(master=frame, placeholder_text="COMMAND")
-commandEntry.pack(pady=12, padx=10)
-
-portVar = customtkinter.StringVar()
-portValues = ['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7']
-portComboBox = customtkinter.CTkComboBox(master=frame, values=portValues, variable=portVar)
-portComboBox.pack(pady=12, padx=10)
+    portVar = customtkinter.StringVar()
+    portValues = ['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7']
+    portComboBox = customtkinter.CTkComboBox(master=frame, values=portValues, variable=portVar)
+    portComboBox.pack(pady=12, padx=10)
 
 
-sendButton = customtkinter.CTkButton(master=frame, text="SEND", command=send_file)
-sendButton.pack(pady=12, padx=10)
+    sendButton = customtkinter.CTkButton(master=frame, text="SEND", command=send_file)
+    sendButton.pack(pady=12, padx=10)
 
-root.mainloop()
+    root.mainloop()
