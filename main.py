@@ -50,7 +50,7 @@ def format_data(data, address, command):
         command_bytearray[-(0 + 1)] = command >> 0 & 0xFF
 
         # Concatenate the bytearrays
-        concatenated_chunk = chunk_bytearray + address_bytearray + command_bytearray
+        concatenated_chunk = command_bytearray + address_bytearray + chunk_bytearray
 
         # Append to the list
         formatted_chunks.append(concatenated_chunk)
