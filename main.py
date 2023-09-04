@@ -1,4 +1,5 @@
 import serial
+import re
 
 import customtkinter
 from customtkinter import filedialog
@@ -29,6 +30,25 @@ def read_file(file_name):
 def save_file(file_name, data):
     with open(file_name, "wb") as archivo:
         archivo.write(data)
+
+
+def format_read(data):
+    # Split the data into chunks
+    chunks = [data[i:i + 8] for i in range(0, len(data), 8)]
+    # Concatenate additional bits to each chunk
+    formatted_chunks = []
+    for chunk in chunks:
+        # Convert chunk to bytearray
+        chunk_bytearray = bytearray(chunk)
+
+        # Concatenate the bytearrays
+        concatenated_chunk = chunk_bytearray
+
+        # Append to the list
+        formatted_chunks.append(concatenated_chunk)
+
+    # Return the list of bytearrays
+    return formatted_chunks
 
 
 def format_data(data, address, command):
@@ -67,35 +87,73 @@ def send_file():
         sendButton.configure(state="enabled")
         return
     port = portVar.get()
-    print(port)
+    #print(port)
 
     data = read_file(file_name)
-    address = int(addressEntry.get())
+    address = int(addressEntry.get(),16)
     command = int(commandEntry.get())
 
-    formatted_data = format_data(data, address, command)
+    if command==1:
+        formatted_data = format_data(data, address, command)
+        port1 = serial.Serial(port, 115200, timeout=1)
+        try:
+            #
+            testfile = open('test.hex', 'wb')
+            for data_package in formatted_data:
+                testfile.write(data_package)
+                send_data(data_package, port1)
+                print(data_package)
+            # Only for tests
+            # received_data = receive_data(port1, len(data))
+            # print(received_data)
+            # save_file("test.hex", received_data)#
 
-    port1 = serial.Serial(port, 115200, timeout=1)
-    try:
-        #
-        testfile = open('test.hex', 'wb')
-        for data_package in formatted_data:
-            testfile.write(data_package)
-            send_data(data_package, port1)
-            print(data_package)
-        # Only for tests
-        # received_data = receive_data(port1, len(data))
-        # print(received_data)
-        # save_file("test.hex", received_data)#
+        except serial.SerialException as e:
+            print("There was an error trying to send the file", e)
 
-    except serial.SerialException as e:
-        print("There was an error trying to send the file", e)
+        finally:
+            print("test successful")
+            sendButton.configure(state="normal")
+            port1.close()
 
-    finally:
-        print("test successful")
+    #Implementar método de lectura
+    # Falta testeo, correciones y acabado
+    elif command == 2:
+        datos2=read_file("test.hex")
+
+        formatted_read = format_read(data)
+        port1 = serial.Serial(port, 115200, timeout=1)
+        try:
+            #
+            testfile = open('test_read.hex', 'wb')
+            for data_package in formatted_read:
+                testfile.write(data_package)
+                send_data(data_package, port1)
+                print(data_package)
+
+        except serial.SerialException as e:
+            print("There was an error trying to send the file", e)
+
+        finally:
+            print("test successful")
+            sendButton.configure(state="normal")
+            port1.close()
+
+    else:
+        print("Comando desconocido")
         sendButton.configure(state="normal")
-        port1.close()
 
+def findports():
+    ports = ['COM%s' % (i + 1) for i in range(256)]
+    found = []
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            found.append(port)
+        except (OSError, serial.SerialException):
+            pass
+    return found
 
 def browse_file():
     filepath = filedialog.askopenfilename(initialdir="/",
@@ -127,7 +185,7 @@ if __name__ == '__main__':
     commandEntry.pack(pady=12, padx=10)
 
     portVar = customtkinter.StringVar()
-    portValues = ['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7']
+    portValues = findports()
     portComboBox = customtkinter.CTkComboBox(master=frame, values=portValues, variable=portVar)
     portComboBox.pack(pady=12, padx=10)
 
