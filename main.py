@@ -1,5 +1,4 @@
 import serial
-import re
 
 import customtkinter
 from customtkinter import filedialog
@@ -9,6 +8,7 @@ customtkinter.set_default_color_theme("dark-blue")
 
 root = customtkinter.CTk()
 root.geometry("600x600")
+root.resizable(0, 0)
 
 
 def send_data(data, port):
@@ -80,6 +80,12 @@ def format_data(data, address, command):
     return formatted_chunks
 
 
+def createDataOutput():
+    outputFrame = customtkinter.CTkLabel(master=frame, width=400, height=30)
+    outputFrame.pack(pady=12, padx=10)
+    return outputFrame
+
+
 def send_file():
     sendButton.configure(state="disabled")
     file_name = label3.cget("text")
@@ -87,22 +93,33 @@ def send_file():
         sendButton.configure(state="enabled")
         return
     port = portVar.get()
-    #print(port)
+    # print(port)
 
     data = read_file(file_name)
-    address = int(addressEntry.get(),16)
+    address = int(addressEntry.get(), 16)
     command = int(commandEntry.get())
 
-    if command==1:
+    if command == 1:
         formatted_data = format_data(data, address, command)
         port1 = serial.Serial(port, 115200, timeout=1)
+        aux = ""
         try:
             #
+            contador = 1
             testfile = open('test.hex', 'wb')
             for data_package in formatted_data:
                 testfile.write(data_package)
                 send_data(data_package, port1)
                 print(data_package)
+
+                # Print data in Label
+
+                outputFrame.insert(str(contador) + ".0", text=str(data_package)+'\n')
+                outputFrame.see("end")
+                root.update_idletasks()
+                contador+=1
+            # Finish print
+
             # Only for tests
             # received_data = receive_data(port1, len(data))
             # print(received_data)
@@ -112,14 +129,15 @@ def send_file():
             print("There was an error trying to send the file", e)
 
         finally:
-            print("test successful")
+            # print("test successful")
+            outputFrame.configure(state="disabled")
             sendButton.configure(state="normal")
             port1.close()
 
-    #Implementar método de lectura
+    # Implementar método de lectura
     # Falta testeo, correciones y acabado
     elif command == 2:
-        datos2=read_file("test.hex")
+        datos2 = read_file("test.hex")
 
         formatted_read = format_read(data)
         port1 = serial.Serial(port, 115200, timeout=1)
@@ -130,6 +148,8 @@ def send_file():
                 testfile.write(data_package)
                 send_data(data_package, port1)
                 print(data_package)
+
+
 
         except serial.SerialException as e:
             print("There was an error trying to send the file", e)
@@ -143,6 +163,7 @@ def send_file():
         print("Comando desconocido")
         sendButton.configure(state="normal")
 
+
 def findports():
     ports = ['COM%s' % (i + 1) for i in range(256)]
     found = []
@@ -155,11 +176,15 @@ def findports():
             pass
     return found
 
+
 def browse_file():
     filepath = filedialog.askopenfilename(initialdir="/",
                                           title="Select a File",
                                           filetypes=(("All files", "*.*"),))
     label3.configure(text=filepath)
+
+
+# Function to print data in the EntryOutput
 
 
 if __name__ == '__main__':
@@ -191,5 +216,9 @@ if __name__ == '__main__':
 
     sendButton = customtkinter.CTkButton(master=frame, text="SEND", command=send_file)
     sendButton.pack(pady=12, padx=10)
+
+    outputFrame = customtkinter.CTkTextbox(master=frame, width=400, height=300)
+    outputFrame.pack(pady=12, padx=10)
+    # Output to read
 
     root.mainloop()
