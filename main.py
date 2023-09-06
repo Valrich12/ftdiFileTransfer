@@ -131,7 +131,6 @@ def send_file():
             #
             testfile = open('test_read.hex', 'wb')
 
-
         except serial.SerialException as e:
             print("There was an error trying to send the file", e)
 
