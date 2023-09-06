@@ -8,7 +8,7 @@ customtkinter.set_default_color_theme("dark-blue")
 
 root = customtkinter.CTk()
 root.geometry("600x600")
-root.resizable(0, 0)
+root.resizable()
 
 
 def send_data(data, port):
@@ -32,7 +32,7 @@ def save_file(file_name, data):
         archivo.write(data)
 
 
-def format_read(data):
+def format_received_data(data):
     # Split the data into chunks
     chunks = [data[i:i + 8] for i in range(0, len(data), 8)]
     # Concatenate additional bits to each chunk
@@ -40,12 +40,8 @@ def format_read(data):
     for chunk in chunks:
         # Convert chunk to bytearray
         chunk_bytearray = bytearray(chunk)
-
-        # Concatenate the bytearrays
-        concatenated_chunk = chunk_bytearray
-
         # Append to the list
-        formatted_chunks.append(concatenated_chunk)
+        formatted_chunks.append(chunk_bytearray)
 
     # Return the list of bytearrays
     return formatted_chunks
@@ -54,6 +50,8 @@ def format_read(data):
 def format_data(data, address, command):
     # Split the data into chunks
     chunks = [data[i:i + 8] for i in range(0, len(data), 8)]
+    # Add an End Of File
+    chunks.append(bytearray("EndOFile", "utf-8"))
     # Concatenate additional bits to each chunk
     formatted_chunks = []
     for chunk in chunks:
@@ -76,14 +74,10 @@ def format_data(data, address, command):
         formatted_chunks.append(concatenated_chunk)
         address = address + 1
 
+    # Concatenate an EOF at the last+1 memory address
+
     # Return the list of bytearrays
     return formatted_chunks
-
-
-def createDataOutput():
-    outputFrame = customtkinter.CTkLabel(master=frame, width=400, height=30)
-    outputFrame.pack(pady=12, padx=10)
-    return outputFrame
 
 
 def send_file():
@@ -98,14 +92,12 @@ def send_file():
     data = read_file(file_name)
     address = int(addressEntry.get(), 16)
     command = int(commandEntry.get())
-
+    port1 = serial.Serial(port, 115200, timeout=1)
     if command == 1:
         formatted_data = format_data(data, address, command)
-        port1 = serial.Serial(port, 115200, timeout=1)
-        aux = ""
         try:
             #
-            contador = 1
+            counter = 1
             testfile = open('test.hex', 'wb')
             for data_package in formatted_data:
                 testfile.write(data_package)
@@ -114,10 +106,10 @@ def send_file():
 
                 # Print data in Label
 
-                outputFrame.insert(str(contador) + ".0", text=str(data_package)+'\n')
+                outputFrame.insert(str(counter) + ".0", text=str(data_package) + '\n')
                 outputFrame.see("end")
                 root.update_idletasks()
-                contador+=1
+                counter += 1
             # Finish print
 
             # Only for tests
@@ -134,21 +126,10 @@ def send_file():
             sendButton.configure(state="normal")
             port1.close()
 
-    # Implementar método de lectura
-    # Falta testeo, correciones y acabado
     elif command == 2:
-        datos2 = read_file("test.hex")
-
-        formatted_read = format_read(data)
-        port1 = serial.Serial(port, 115200, timeout=1)
         try:
             #
             testfile = open('test_read.hex', 'wb')
-            for data_package in formatted_read:
-                testfile.write(data_package)
-                send_data(data_package, port1)
-                print(data_package)
-
 
 
         except serial.SerialException as e:
@@ -160,11 +141,11 @@ def send_file():
             port1.close()
 
     else:
-        print("Comando desconocido")
+        print("Command Unknown")
         sendButton.configure(state="normal")
 
 
-def findports():
+def find_ports():
     ports = ['COM%s' % (i + 1) for i in range(256)]
     found = []
     for port in ports:
@@ -182,9 +163,6 @@ def browse_file():
                                           title="Select a File",
                                           filetypes=(("All files", "*.*"),))
     label3.configure(text=filepath)
-
-
-# Function to print data in the EntryOutput
 
 
 if __name__ == '__main__':
@@ -210,7 +188,7 @@ if __name__ == '__main__':
     commandEntry.pack(pady=12, padx=10)
 
     portVar = customtkinter.StringVar()
-    portValues = findports()
+    portValues = find_ports()
     portComboBox = customtkinter.CTkComboBox(master=frame, values=portValues, variable=portVar)
     portComboBox.pack(pady=12, padx=10)
 
