@@ -8,6 +8,7 @@ customtkinter.set_default_color_theme("dark-blue")
 
 root = customtkinter.CTk()
 root.geometry("600x600")
+root.resizable()
 
 
 def send_data(data, port):
@@ -31,9 +32,26 @@ def save_file(file_name, data):
         archivo.write(data)
 
 
+def format_received_data(data):
+    # Split the data into chunks
+    chunks = [data[i:i + 8] for i in range(0, len(data), 8)]
+    # Concatenate additional bits to each chunk
+    formatted_chunks = []
+    for chunk in chunks:
+        # Convert chunk to bytearray
+        chunk_bytearray = bytearray(chunk)
+        # Append to the list
+        formatted_chunks.append(chunk_bytearray)
+
+    # Return the list of bytearrays
+    return formatted_chunks
+
+
 def format_data(data, address, command):
     # Split the data into chunks
     chunks = [data[i:i + 8] for i in range(0, len(data), 8)]
+    # Add an End Of File
+    chunks.append(bytearray("EndOFile", "utf-8"))
     # Concatenate additional bits to each chunk
     formatted_chunks = []
     for chunk in chunks:
@@ -56,6 +74,8 @@ def format_data(data, address, command):
         formatted_chunks.append(concatenated_chunk)
         address = address + 1
 
+    # Concatenate an EOF at the last+1 memory address
+
     # Return the list of bytearrays
     return formatted_chunks
 
@@ -67,34 +87,74 @@ def send_file():
         sendButton.configure(state="enabled")
         return
     port = portVar.get()
-    print(port)
+    # print(port)
 
     data = read_file(file_name)
-    address = int(addressEntry.get())
+    address = int(addressEntry.get(), 16)
     command = int(commandEntry.get())
-
-    formatted_data = format_data(data, address, command)
-
     port1 = serial.Serial(port, 115200, timeout=1)
-    try:
-        #
-        testfile = open('test.hex', 'wb')
-        for data_package in formatted_data:
-            testfile.write(data_package)
-            send_data(data_package, port1)
-            print(data_package)
-        # Only for tests
-        # received_data = receive_data(port1, len(data))
-        # print(received_data)
-        # save_file("test.hex", received_data)#
+    if command == 1:
+        formatted_data = format_data(data, address, command)
+        try:
+            #
+            counter = 1
+            testfile = open('test.hex', 'wb')
+            for data_package in formatted_data:
+                testfile.write(data_package)
+                send_data(data_package, port1)
+                print(data_package)
 
-    except serial.SerialException as e:
-        print("There was an error trying to send the file", e)
+                # Print data in Label
 
-    finally:
-        print("test successful")
+                outputFrame.insert(str(counter) + ".0", text=str(data_package) + '\n')
+                outputFrame.see("end")
+                root.update_idletasks()
+                counter += 1
+            # Finish print
+
+            # Only for tests
+            # received_data = receive_data(port1, len(data))
+            # print(received_data)
+            # save_file("test.hex", received_data)#
+
+        except serial.SerialException as e:
+            print("There was an error trying to send the file", e)
+
+        finally:
+            # print("test successful")
+            outputFrame.configure(state="disabled")
+            sendButton.configure(state="normal")
+            port1.close()
+
+    elif command == 2:
+        try:
+            #
+            testfile = open('test_read.hex', 'wb')
+
+        except serial.SerialException as e:
+            print("There was an error trying to send the file", e)
+
+        finally:
+            print("test successful")
+            sendButton.configure(state="normal")
+            port1.close()
+
+    else:
+        print("Command Unknown")
         sendButton.configure(state="normal")
-        port1.close()
+
+
+def find_ports():
+    ports = ['COM%s' % (i + 1) for i in range(256)]
+    found = []
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            found.append(port)
+        except (OSError, serial.SerialException):
+            pass
+    return found
 
 
 def browse_file():
@@ -127,11 +187,15 @@ if __name__ == '__main__':
     commandEntry.pack(pady=12, padx=10)
 
     portVar = customtkinter.StringVar()
-    portValues = ['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7']
+    portValues = find_ports()
     portComboBox = customtkinter.CTkComboBox(master=frame, values=portValues, variable=portVar)
     portComboBox.pack(pady=12, padx=10)
 
     sendButton = customtkinter.CTkButton(master=frame, text="SEND", command=send_file)
     sendButton.pack(pady=12, padx=10)
+
+    outputFrame = customtkinter.CTkTextbox(master=frame, width=400, height=300)
+    outputFrame.pack(pady=12, padx=10)
+    # Output to read
 
     root.mainloop()
