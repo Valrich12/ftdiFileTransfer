@@ -11,6 +11,20 @@ root.geometry("600x600")
 root.resizable()
 
 
+def generate_dummy_data(address):
+    address_bytearray = bytearray(8)
+    command_bytearray = bytearray(1)
+    for i in range(8):
+        address_bytearray[-(i + 1)] = address >> (8 * i) & 0xFF
+
+    command_bytearray[-(0 + 1)] = 2 >> 0 & 0xFF
+    dummy_data = [0, 0, 0, 0, 0, 0, 0, 0]
+    dummy_data_bytes = bytearray(dummy_data)
+    # Concatenate the bytearrays
+    concatenated_chunk = command_bytearray + address_bytearray + dummy_data_bytes
+    return concatenated_chunk
+
+
 def send_data(data, port):
     port.write(data)
     return
@@ -130,6 +144,18 @@ def send_file():
         try:
             #
             testfile = open('test_read.hex', 'wb')
+            dummy_data = generate_dummy_data(address)
+            counter = 1
+            while True:
+                send_data(dummy_data, port1)
+                received_data = receive_data(port1, 8)
+                outputFrame.insert(str(counter) + ".0", text=str(received_data) + '\n')
+                outputFrame.see("end")
+                root.update_idletasks()
+                counter += 1
+                if str(received_data, 'utf-8') == "EndOFile":
+                    break
+                testfile.write(received_data)
 
         except serial.SerialException as e:
             print("There was an error trying to send the file", e)
