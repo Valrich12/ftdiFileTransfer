@@ -95,23 +95,23 @@ def format_data(data, address, command):
 
 
 def send_file():
+    counter = 1
     sendButton.configure(state="disabled")
     file_name = label3.cget("text")
-    if file_name == "":
-        sendButton.configure(state="enabled")
-        return
     port = portVar.get()
     # print(port)
 
-    data = read_file(file_name)
     address = int(addressEntry.get(), 16)
     command = int(commandEntry.get())
     port1 = serial.Serial(port, 115200, timeout=1)
     if command == 1:
+        data = read_file(file_name)
+        if file_name == "":
+            sendButton.configure(state="enabled")
+            return
         formatted_data = format_data(data, address, command)
         try:
             #
-            counter = 1
             testfile = open('test.hex', 'wb')
             for data_package in formatted_data:
                 testfile.write(data_package)
@@ -149,12 +149,25 @@ def send_file():
             while True:
                 send_data(dummy_data, port1)
                 received_data = receive_data(port1, 8)
+                counter += 1
+
+                if not received_data:
+                    outputFrame.insert(str(counter) + ".0", "No Data Found")
+                    outputFrame.see("end")
+                    counter += 1
+                    root.update_idletasks()
+                    break
+
                 outputFrame.insert(str(counter) + ".0", text=str(received_data) + '\n')
                 outputFrame.see("end")
                 root.update_idletasks()
-                counter += 1
-                if str(received_data, 'utf-8') == "EndOFile":
+
+                endOfFile = bytearray("EndOFile", 'utf-8')
+
+                if received_data == endOfFile:
+                    root.update_idletasks()
                     break
+
                 testfile.write(received_data)
 
         except serial.SerialException as e:
