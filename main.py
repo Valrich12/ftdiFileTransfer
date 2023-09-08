@@ -19,10 +19,10 @@ def validation(address, filename, port):
     data = read_file(filename)
     chunks = [data[i:i + 8] for i in range(0, len(data), 8)]
     # Generate dummy data to send through the ftdi in order to receive the data from memory
-    dummy_data = generate_dummy_data(address)
 
     try:
         for chunk in chunks:
+            dummy_data = generate_dummy_data(address)
             # Send dummy data and receive data from memory
             send_data(dummy_data, port)
             received_data = receive_data(port, 8)
@@ -36,13 +36,13 @@ def validation(address, filename, port):
                 outputFrame.insert(str(counter) + ".0", text=str(chunk) + "=" + str(received_data) + "NOT OK \n")
                 outputFrame.see("end")
                 root.update_idletasks()
+            address = address + 1
             counter += 1
     except serial.SerialException as e:
         print("There was an error trying to send the file", e)
 
     finally:
         print("test successful")
-
 
 
 def generate_dummy_data(address):
@@ -179,13 +179,15 @@ def send_file():
         try:
             # Open the file to store the data read from memory
             fileread = open("file_read.hex", 'wb')
-            # Generate the dummy data to send through the FTDI in order to receive the data from memory
-            dummy_data = generate_dummy_data(address)
+
             # Start a counter for changing lines in the textbox
             counter = 1
             # Create an End of File byte array to compare with the received data
             endOfFile = bytearray("EndOFile", 'utf-8')
+            address_aux = address
             while True:
+                # Generate the dummy data to send through the FTDI in order to receive the data from memory
+                dummy_data = generate_dummy_data(address_aux)
                 # Send the dummy data and then receive the data read from memory
                 send_data(dummy_data, port1)
                 received_data = receive_data(port1, 8)
@@ -207,6 +209,7 @@ def send_file():
                 root.update_idletasks()
                 # Write the received data into the file
                 fileread.write(received_data)
+                address_aux = address_aux + 1
             validation(address, "file_read.hex", port1)
 
         except serial.SerialException as e:
