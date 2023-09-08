@@ -21,21 +21,28 @@ def validation(address, filename, port):
     # Generate dummy data to send through the ftdi in order to receive the data from memory
     dummy_data = generate_dummy_data(address)
 
-    for chunk in chunks:
-        # Send dummy data and receive data from memory
-        send_data(dummy_data, port)
-        received_data = receive_data(port, 8)
+    try:
+        for chunk in chunks:
+            # Send dummy data and receive data from memory
+            send_data(dummy_data, port)
+            received_data = receive_data(port, 8)
 
-        # verify if data in file is the same as the data from memory
-        if received_data == chunk:
-            outputFrame.insert(str(counter) + ".0", text=str(chunk) + "=" + str(received_data) + "OK \n")
-            outputFrame.see("end")
-            root.update_idletasks()
-        else:
-            outputFrame.insert(str(counter) + ".0", text=str(chunk) + "=" + str(received_data) + "NOT OK \n")
-            outputFrame.see("end")
-            root.update_idletasks()
-        counter += 1
+            # verify if data in file is the same as the data from memory
+            if received_data == chunk:
+                outputFrame.insert(str(counter) + ".0", text=str(chunk) + "=" + str(received_data) + "OK \n")
+                outputFrame.see("end")
+                root.update_idletasks()
+            else:
+                outputFrame.insert(str(counter) + ".0", text=str(chunk) + "=" + str(received_data) + "NOT OK \n")
+                outputFrame.see("end")
+                root.update_idletasks()
+            counter += 1
+    except serial.SerialException as e:
+        print("There was an error trying to send the file", e)
+
+    finally:
+        print("test successful")
+
 
 
 def generate_dummy_data(address):
@@ -200,7 +207,7 @@ def send_file():
                 root.update_idletasks()
                 # Write the received data into the file
                 fileread.write(received_data)
-                validation(address, "file_read.hex", port1)
+            validation(address, "file_read.hex", port1)
 
         except serial.SerialException as e:
             print("There was an error trying to send the file", e)
