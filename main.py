@@ -11,6 +11,32 @@ root.geometry("600x600")
 root.resizable()
 
 
+def validation(address, filename, port):
+    counter = 1
+    # Clear the text box
+    outputFrame.delete("1.0", "end")
+    # Read the data from the file we want to validate and split it into 8 byte chunks
+    data = read_file(filename)
+    chunks = [data[i:i + 8] for i in range(0, len(data), 8)]
+    # Generate dummy data to send through the ftdi in order to receive the data from memory
+    dummy_data = generate_dummy_data(address)
+
+    for chunk in chunks:
+        # Send dummy data and receive data from memory
+        send_data(dummy_data, port)
+        received_data = receive_data(port, 8)
+
+        # verify if data in file is the same as the data from memory
+        if received_data == chunk:
+            outputFrame.insert(str(counter) + ".0", text=str(chunk) + "=" + str(received_data) + "OK \n")
+            outputFrame.see("end")
+            root.update_idletasks()
+        else:
+            outputFrame.insert(str(counter) + ".0", text=str(chunk) + "=" + str(received_data) + "NOT OK \n")
+            outputFrame.see("end")
+            root.update_idletasks()
+
+
 def generate_dummy_data(address):
     address_bytearray = bytearray(8)
     command_bytearray = bytearray(1)
@@ -95,6 +121,7 @@ def format_data(data, address, command):
 
 
 def send_file():
+    outputFrame.delete("1.0", "end")
     counter = 1
     sendButton.configure(state="disabled")
     file_name = label3.cget("text")
@@ -142,33 +169,37 @@ def send_file():
 
     elif command == 2:
         try:
-            #
-            testfile = open('test_read.hex', 'wb')
+            # Open the file to store the data read from memory
+            fileread = open("file_read.hex", 'wb')
+            # Generate the dummy data to send through the FTDI in order to receive the data from memory
             dummy_data = generate_dummy_data(address)
+            # Start a counter for changing lines in the textbox
             counter = 1
+            # Create an End of File byte array to compare with the received data
+            endOfFile = bytearray("EndOFile", 'utf-8')
             while True:
+                # Send the dummy data and then receive the data read from memory
                 send_data(dummy_data, port1)
                 received_data = receive_data(port1, 8)
-                counter += 1
 
+                # If there's no data break the loop and return
                 if not received_data:
                     outputFrame.insert(str(counter) + ".0", "No Data Found")
                     outputFrame.see("end")
                     counter += 1
                     root.update_idletasks()
                     break
-
-                outputFrame.insert(str(counter) + ".0", text=str(received_data) + '\n')
-                outputFrame.see("end")
-                root.update_idletasks()
-
-                endOfFile = bytearray("EndOFile", 'utf-8')
-
+                # When the end of file is detected we break the loop and return
                 if received_data == endOfFile:
                     root.update_idletasks()
                     break
-
-                testfile.write(received_data)
+                # Print the received data into the textbox
+                outputFrame.insert(str(counter) + ".0", text=str(received_data) + '\n')
+                outputFrame.see("end")
+                root.update_idletasks()
+                # Write the received data into the file
+                fileread.write(received_data)
+                validation(address, "file_read.hex", port1)
 
         except serial.SerialException as e:
             print("There was an error trying to send the file", e)
