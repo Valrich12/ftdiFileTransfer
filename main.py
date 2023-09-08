@@ -35,6 +35,7 @@ def validation(address, filename, port):
             outputFrame.insert(str(counter) + ".0", text=str(chunk) + "=" + str(received_data) + "NOT OK \n")
             outputFrame.see("end")
             root.update_idletasks()
+        counter += 1
 
 
 def generate_dummy_data(address):
